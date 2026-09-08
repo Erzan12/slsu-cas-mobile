@@ -30,3 +30,14 @@ export async function apiFetch<T = unknown>(
 
   return res.json() as Promise<T>;
 }
+
+// For the public homepage preview - no token need, and shouldn't send one even if logged in
+export async function apiFetchPublic<T = unknown>(path: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { Accept: "Application/json" },
+  });
+
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+  return res.json() as Promise<T>;
+}
