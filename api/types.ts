@@ -11,6 +11,13 @@ export interface AuthUser {
   avatar: string;
 }
 
+export interface AuthContextValue {
+  user: AuthUser | null;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<AuthUser>;
+  logout: () => Promise<void>;
+}
+
 export interface LoginResponse {
   token: string;
   user: AuthUser;
