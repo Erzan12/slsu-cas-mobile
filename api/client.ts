@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = "http://localhost:8000/api"; // swap to live or deployed render url
+const API_URL = "https://slsu-clinic-appointment-system.onrender.com/api"; // swap to live or deployed render url
 
 interface ApiError {
   message?: string;
