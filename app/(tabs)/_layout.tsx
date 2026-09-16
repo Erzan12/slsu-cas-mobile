@@ -1,5 +1,4 @@
 import { Tabs } from "expo-router";
-import React from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,10 +30,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="my-appointment"
+        name="my-appointments"
         options={{
           title: "My Appointment",
-          href: isSpecialist ? undefined : null,
+          href: isPatient ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text" color={color} size={size} />
           ),

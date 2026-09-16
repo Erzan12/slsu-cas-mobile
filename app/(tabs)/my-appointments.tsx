@@ -4,13 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 const STATUS_MAP: Record<number, { label: string; color: string; bg: string }> =
@@ -76,7 +76,7 @@ export default function MyAppointmentScreen() {
                 "Error",
                 e instanceof Error
                   ? e.message
-                  : "Could not calcen appointment.",
+                  : "Could not cancel appointment.",
               );
             }
           },
@@ -107,7 +107,7 @@ export default function MyAppointmentScreen() {
               <StatusBadge status={item.status} />
             </View>
             <Text style={styles.date}>
-              {item.schedule?.date} at {item.preffered_time.slice(0, 5)}
+              {item.schedule?.date} at {item.preferred_time?.slice(0, 5)}
             </Text>
 
             <View style={styles.actions}>
@@ -127,7 +127,12 @@ export default function MyAppointmentScreen() {
               {item.status === 2 && (
                 <Pressable
                   style={styles.rateButton}
-                  onPress={() => router.push(`/appointment/${item.id}/rate`)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/appointment/[id]/rate",
+                      params: { id: String(item.id) },
+                    })
+                  }
                 >
                   <Ionicons name="star-outline" size={16} color="#fff" />
                   <Text style={styles.rateText}>Rate This Visit</Text>
@@ -157,7 +162,7 @@ const styles = StyleSheet.create({
   },
   service: { fontWeight: "700", fontSize: 15, color: "#0f172a" },
   date: { color: "#64748b", fontSize: 13, marginBottom: 8 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 9 },
   badgeText: { fontSize: 11, fontWeight: "700" },
   actions: { flexDirection: "row", gap: 10, marginTop: 4 },
   cancelButton: {
