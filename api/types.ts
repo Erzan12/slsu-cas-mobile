@@ -67,7 +67,7 @@ export interface Appointment {
   id: number;
   patient_id: number;
   schedule_id: number;
-  preffered_time: string;
+  preferred_time: string;
   status: number;
   first_name: string;
   middle_name: string | null;
