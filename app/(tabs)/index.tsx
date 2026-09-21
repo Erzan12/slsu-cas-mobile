@@ -1,4 +1,4 @@
-import { apiFetch } from "@/api/client";
+import { apiFetch, UnauthenticatedError } from "@/api/client";
 import { Appointment, PaginatedResponse } from "@/api/types";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,26 +29,38 @@ export default function HomeScreen() {
   const load = useCallback(async () => {
     if (!user) return;
 
-    const res = await apiFetch<PaginatedResponse<Appointment>>("/appointments");
-    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const res =
+        await apiFetch<PaginatedResponse<Appointment>>("/appointments");
+      const today = new Date().toISOString().slice(0, 10);
 
-    if (user.role === "patient") {
-      const upcoming = res.data
-        .filter(
-          (a) =>
-            [0, 1].includes(a.status) && a.schedule && a.schedule.date >= today,
-        )
-        .sort((a, b) => (a.schedule!.date > b.schedule!.date ? 1 : -1));
-      setNextAppointment(upcoming[0] ?? null);
-    }
+      if (user.role === "patient") {
+        const upcoming = res.data
+          .filter(
+            (a) =>
+              [0, 1].includes(a.status) &&
+              a.schedule &&
+              a.schedule.date >= today,
+          )
+          .sort((a, b) => (a.schedule!.date > b.schedule!.date ? 1 : -1));
+        setNextAppointment(upcoming[0] ?? null);
+      }
 
-    if (user.role === "specialist") {
-      setPendingCount(res.data.filter((a) => a.status === 0).length);
-      setTodayCount(
-        res.data.filter(
-          (a) => a.schedule?.date === today && [0, 1].includes(a.status),
-        ).length,
-      );
+      if (user.role === "specialist") {
+        setPendingCount(res.data.filter((a) => a.status === 0).length);
+        setTodayCount(
+          res.data.filter(
+            (a) => a.schedule?.date === today && [0, 1].includes(a.status),
+          ).length,
+        );
+      }
+    } catch (e) {
+      if (e instanceof UnauthenticatedError) {
+        router.replace("/(auth)/login");
+        return;
+      }
+      // any other error — fail quietly on Home rather than crashing the screen
+      console.warn("Failed to load appointments:", e);
     }
   }, [user]);
 
@@ -135,7 +147,7 @@ export default function HomeScreen() {
 
               <Pressable
                 style={styles.primaryAction}
-                // onPress={() => router.push("/(tabs)/appointments")}
+                onPress={() => router.push("/(tabs)/appointments")}
               >
                 <Ionicons name="clipboard" size={20} color="#fff" />
                 <Text style={styles.primaryActionText}>

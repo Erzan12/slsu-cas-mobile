@@ -7,6 +7,8 @@ interface ApiError {
   errors?: Record<string, string[]>;
 }
 
+export class UnauthenticatedError extends Error {}
+
 export async function apiFetch<T = unknown>(
   path: string,
   options: RequestInit = {},
@@ -22,6 +24,14 @@ export async function apiFetch<T = unknown>(
       ...options.headers,
     },
   });
+
+  // Fixed client error
+  if (res.status === 401) {
+    // Token is dead - clear local session so the app routes back to login
+    await SecureStore.deleteItemAsync("auth_auth");
+    await SecureStore.deleteItemAsync("auth_user");
+    throw new UnauthenticatedError("Session expired. Please log in again.");
+  }
 
   if (!res.ok) {
     const err: ApiError = await res.json().catch(() => ({}));
