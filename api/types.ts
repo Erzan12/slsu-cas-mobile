@@ -102,3 +102,11 @@ export interface PaginatedResponse<T> {
   last_page: number;
   total: number;
 }
+
+export interface Finding {
+  id: number;
+  appointment_id: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}

@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import type { Finding } from "../../api/types";
 
 const STATUS_MAP: Record<number, { label: string; color: string; bg: string }> =
   {
@@ -39,6 +40,11 @@ export default function MyAppointmentScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // expanded findings
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [findings, setFindings] = useState<Record<number, Finding | null>>({});
+  const [findingLoading, setFindingLoading] = useState<number | null>(null);
+
   const load = useCallback(async () => {
     const res = await apiFetch<PaginatedResponse<Appointment>>("/appointments");
     setAppointments(res.data);
@@ -54,6 +60,29 @@ export default function MyAppointmentScreen() {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  }
+
+  async function toggleFinding(appointment: Appointment) {
+    if (expandedId === appointment.id) {
+      setExpandedId(null);
+      return;
+    }
+
+    setExpandedId(appointment.id);
+
+    if (findings[appointment.id] !== undefined) return; // already fetched
+
+    setFindingLoading(appointment.id);
+    try {
+      const findings = await apiFetch<Finding | null>(
+        `/appointments/${appointment.id}/finding`,
+      );
+      setFindings((prev) => ({ ...prev, [appointment.id]: findings }));
+    } catch {
+      setFindings((prev) => ({ ...prev, [appointment.id]: null }));
+    } finally {
+      setFindingLoading(null);
+    }
   }
 
   function confirmCancel(appointment: Appointment) {
@@ -98,49 +127,78 @@ export default function MyAppointmentScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>No appointments yet.</Text>
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.service}>
-                {item.schedule?.service?.name ?? "Appointment"}
-              </Text>
-              <StatusBadge status={item.status} />
-            </View>
-            <Text style={styles.date}>
-              {item.schedule?.date} at {item.preferred_time?.slice(0, 5)}
-            </Text>
+        renderItem={({ item }) => {
+          const canShowFinding = item.status === 2 || item.status === 3;
 
-            <View style={styles.actions}>
-              {(item.status === 0 || item.status === 1) && (
-                <Pressable
-                  style={styles.cancelButton}
-                  onPress={() => confirmCancel(item)}
-                >
-                  <Ionicons
-                    name="close-circle-outline"
-                    size={16}
-                    color="#dc2626"
-                  />
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </Pressable>
+          return (
+            <Pressable
+              style={styles.card}
+              onPress={() => canShowFinding && toggleFinding(item)}
+              disabled={!canShowFinding}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.service}>
+                  {item.schedule?.service?.name ?? "Appointment"}
+                </Text>
+                <StatusBadge status={item.status} />
+              </View>
+              <Text style={styles.date}>
+                {item.schedule?.date} at {item.preferred_time?.slice(0, 5)}
+              </Text>
+
+              {canShowFinding && (
+                <View style={styles.findingSection}>
+                  {expandedId === item.id ? (
+                    findingLoading === item.id ? (
+                      <ActivityIndicator
+                        size="small"
+                        style={{ marginTop: 8 }}
+                      />
+                    ) : findings[item.id] ? (
+                      <View style={styles.findingBox}>
+                        <Text style={styles.findingLabel}>Doctor's Notes</Text>
+                        <Text style={styles.findingText}>
+                          {findings[item.id]!.description}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.noFinding}>
+                        No notes recorded for this visit.
+                      </Text>
+                    )
+                  ) : (
+                    <Text style={styles.tapHint}>Tap to view notes</Text>
+                  )}
+                </View>
               )}
-              {item.status === 2 && (
-                <Pressable
-                  style={styles.rateButton}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/appointment/[id]/rate",
-                      params: { id: String(item.id) },
-                    })
-                  }
-                >
-                  <Ionicons name="star-outline" size={16} color="#fff" />
-                  <Text style={styles.rateText}>Rate This Visit</Text>
-                </Pressable>
-              )}
-            </View>
-          </View>
-        )}
+
+              <View style={styles.actions}>
+                {(item.status === 0 || item.status === 1) && (
+                  <Pressable
+                    style={styles.cancelButton}
+                    onPress={() => confirmCancel(item)}
+                  >
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={16}
+                      color="#dc2626"
+                    />
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </Pressable>
+                )}
+                {item.status === 2 && (
+                  <Pressable
+                    style={styles.rateButton}
+                    onPress={() => router.push(`/appointment/${item.id}/rate`)}
+                  >
+                    <Ionicons name="star-outline" size={16} color="#fff" />
+                    <Text style={styles.rateText}>Rate This Visit</Text>
+                  </Pressable>
+                )}
+              </View>
+            </Pressable>
+          );
+        }}
       />
     </View>
   );
@@ -186,4 +244,25 @@ const styles = StyleSheet.create({
   },
   rateText: { color: "#fff", fontWeight: "600", fontSize: 12 },
   empty: { textAlign: "center", color: "#94a3b8", marginTop: 40 },
+  findingSection: { marginTop: 6 },
+  tapHint: { color: "#94a3b8", fontSize: 11, fontStyle: "italic" },
+  findingBox: {
+    backgroundColor: "#f0fdfa",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 4,
+  },
+  findingLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0891b2",
+    marginBottom: 4,
+  },
+  findingText: { color: "#334155", fontSize: 13, lineHeight: 18 },
+  noFinding: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: 4,
+  },
 });
