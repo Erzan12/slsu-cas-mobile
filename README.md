@@ -98,3 +98,8 @@ This project is part of a unified suite of university mobile applications built 
 1. **QCAMS Mobile** — QR Code Attendance Management System
 2. **SLSU CAS Mobile** - University Clinic Appointment System
 3. **Livestock Profiling & Tagging System** - Agricultural Management System
+
+## 👤 Author
+**Erzan**
+* **GitHub: https://github.com/Erzan12**
+* **Portfolio: https://erzan-dev.vercel.app/**
