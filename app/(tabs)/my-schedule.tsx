@@ -1,19 +1,20 @@
 import { apiFetch } from "@/api/client";
 import { Schedule, Service } from "@/api/types";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 export default function MyScheduleScreen() {
@@ -24,9 +25,14 @@ export default function MyScheduleScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [date, setDate] = useState("");
-  const [timeStart, setTimeStart] = useState("");
-  const [timeEnd, setTimeEnd] = useState("");
+  const [date, setDate] = useState<Date | null>(null);
+  const [timeStart, setTimeStart] = useState<Date | null>(null);
+  const [timeEnd, setTimeEnd] = useState<Date | null>(null);
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
   const [quota, setQuota] = useState("15");
   const [submitting, setSubmitting] = useState(false);
 
@@ -44,6 +50,14 @@ export default function MyScheduleScreen() {
     }, [load]),
   );
 
+  function formatDate(d: Date) {
+    return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  }
+
+  function formatTime(d: Date) {
+    return d.toTimeString().slice(0, 5); // HH:MM
+  }
+
   async function onRefresh() {
     setRefreshing(true);
     await load();
@@ -52,9 +66,9 @@ export default function MyScheduleScreen() {
 
   function resetForm() {
     setSelectedService(null);
-    setDate("");
-    setTimeStart("");
-    setTimeEnd("");
+    setDate(null);
+    setTimeStart(null);
+    setTimeEnd(null);
     setQuota("15");
   }
 
@@ -64,15 +78,20 @@ export default function MyScheduleScreen() {
       return;
     }
 
+    if (timeEnd <= timeStart) {
+      Alert.alert("Invalid time range", "End time must be after start time.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await apiFetch("/schedules", {
         method: "POST",
         body: JSON.stringify({
           service_id: selectedService.id,
-          date,
-          time_start: timeStart,
-          time_end: timeEnd,
+          date: formatDate(date),
+          time_start: formatTime(timeStart),
+          time_end: formatTime(timeEnd),
           quota: Number(quota),
         }),
       });
@@ -164,29 +183,62 @@ export default function MyScheduleScreen() {
               ))}
             </View>
 
-            <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-            <TextInput
+            <Text style={styles.label}>Date</Text>
+            <Pressable
               style={styles.input}
-              placeholder="2026-09-20"
-              value={date}
-              onChangeText={setDate}
-            />
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text>{date ? formatDate(date) : "Select date"}</Text>
+            </Pressable>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date ?? new Date()}
+                mode="date"
+                minimumDate={new Date()}
+                onChange={(_, selected) => {
+                  setShowDatePicker(false);
+                  if (selected) setDate(selected);
+                }}
+              />
+            )}
 
-            <Text style={styles.label}>Time Start (HH:MM)</Text>
-            <TextInput
+            <Text style={styles.label}>Time Start</Text>
+            <Pressable
               style={styles.input}
-              placeholder="09:00"
-              value={timeStart}
-              onChangeText={setTimeStart}
-            />
+              onPress={() => setShowStartPicker(true)}
+            >
+              <Text>
+                {timeStart ? formatTime(timeStart) : "Select start time"}
+              </Text>
+            </Pressable>
+            {showStartPicker && (
+              <DateTimePicker
+                value={timeStart ?? new Date()}
+                mode="time"
+                onChange={(_, selected) => {
+                  setShowStartPicker(false);
+                  if (selected) setTimeStart(selected);
+                }}
+              />
+            )}
 
-            <Text style={styles.label}>Time End (HH:MM)</Text>
-            <TextInput
+            <Text style={styles.label}>Time End</Text>
+            <Pressable
               style={styles.input}
-              placeholder="12:00"
-              value={timeEnd}
-              onChangeText={setTimeEnd}
-            />
+              onPress={() => setShowEndPicker(true)}
+            >
+              <Text>{timeEnd ? formatTime(timeEnd) : "Select end time"}</Text>
+            </Pressable>
+            {showEndPicker && (
+              <DateTimePicker
+                value={timeEnd ?? new Date()}
+                mode="time"
+                onChange={(_, selected) => {
+                  setShowEndPicker(false);
+                  if (selected) setTimeEnd(selected);
+                }}
+              />
+            )}
 
             <Text style={styles.label}>Daily Quota</Text>
             <TextInput

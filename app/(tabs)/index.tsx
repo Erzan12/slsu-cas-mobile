@@ -26,6 +26,10 @@ export default function HomeScreen() {
   const [pendingCount, setPendingCount] = useState(0);
   const [todayCount, setTodayCount] = useState(0);
 
+  // Admin state
+  const [totalToday, setTotalToday] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+
   const load = useCallback(async () => {
     if (!user) return;
 
@@ -53,6 +57,16 @@ export default function HomeScreen() {
             (a) => a.schedule?.date === today && [0, 1].includes(a.status),
           ).length,
         );
+      }
+
+      if (user.role === "admin") {
+        const today = new Date().toISOString().slice(0, 10);
+        setTotalToday(
+          res.data.filter(
+            (a) => a.schedule?.date === today && [0, 1].includes(a.status),
+          ).length,
+        );
+        setTotalPending(res.data.filter((a) => a.status === 0).length);
       }
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
@@ -155,6 +169,19 @@ export default function HomeScreen() {
                 </Text>
               </Pressable>
             </>
+          )}
+
+          {user?.role === "admin" && (
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{totalToday}</Text>
+                <Text style={styles.statLabel}>Appointments Today</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{totalPending}</Text>
+                <Text style={styles.statLabel}>Pending Clinic-Wide</Text>
+              </View>
+            </View>
           )}
         </>
       )}

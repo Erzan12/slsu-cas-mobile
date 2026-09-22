@@ -211,24 +211,36 @@ export default function BookScreen() {
               <Text style={styles.fullWarning}>This day is fully booked.</Text>
             )}
             <View style={styles.slotGrid}>
-              {availability.slots.map((slot) => (
-                <Pressable
-                  key={slot.time}
-                  disabled={slot.is_full}
-                  style={[styles.slotChip, slot.is_full && styles.slotChipFull]}
-                  onPress={() => selectTime(slot.time)}
-                >
-                  <Text
+              {availability.slots.map((slot) => {
+                const remaining = slot.capacity - slot.booked;
+                return (
+                  <Pressable
+                    key={slot.time}
+                    disabled={slot.is_full}
                     style={[
-                      styles.slotText,
-                      slot.is_full && styles.slotTextFull,
+                      styles.slotChip,
+                      slot.is_full && styles.slotChipFull,
                     ]}
+                    onPress={() => selectTime(slot.time)}
                   >
-                    {slot.time}
-                  </Text>
-                  {slot.is_full && <Text style={styles.fullLabel}>Full</Text>}
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.slotText,
+                        slot.is_full && styles.slotTextFull,
+                      ]}
+                    >
+                      {slot.time}
+                    </Text>
+                    {slot.is_full ? (
+                      <Text style={styles.fullLabel}>Full</Text>
+                    ) : (
+                      <Text style={styles.remainingLabel}>
+                        {remaining} left
+                      </Text>
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
         )}
@@ -417,4 +429,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+  remainingLabel: {
+    color: "#0891b2",
+    fontSize: 10,
+    fontWeight: "600",
+    marginTop: 2,
+  },
 });
