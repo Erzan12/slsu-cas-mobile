@@ -80,6 +80,15 @@ Note: Heavy administrative CRUD operations (managing services, specialists, and 
 
 ## 🔄 Appointment Lifecycle States
 
+| Code  | Status Label | Meaning                                                            |
+| :---- | :----------- | :----------------------------------------------------------------- |
+| **0** | Pending      | Awaiting specialist approval (only for requires_approval services) |
+| **1** | Approved     | Confirmed booking (auto-confirmed by default)                      |
+| **2** | To Be Rated  | Specialist recorded findings; awaiting patient rating              |
+| **3** | Done         | Visit completed and patient rating submitted                       |
+| **4** | Rejected     | Specialist declined a pending request                              |
+| **5** | Cancelled    | Confirmed appointment cancelled by patient or staff (frees slot)   |
+
 ---
 
 ## 🗺️ Roadmap & Future Improvements
